@@ -1,16 +1,16 @@
 """
-Processing JOB
+Ingestion JOB
 """
 
 from urllib.request import urlretrieve
-from google.cloud import storage
+import boto3
 import urllib.request
 from urllib.error import ContentTooShortError
 import os
 import json
 import sys
 sys.path.insert(0, './config')
-from config.gcs import LANDING_BUCKET
+from config.aws import LANDING_BUCKET
 
 def downloader(url, outpath, try_count = 0):
   try_count+=1
@@ -22,17 +22,15 @@ def downloader(url, outpath, try_count = 0):
     urlretrieve(url, filename=file_path)
   except ContentTooShortError as e:
     print(f"ContentTooShortError, retrying ({try_count})...")
-    if try_count < 4:
+    if try_count < 5:
       return downloader(url, outpath, try_count)
     raise e
 
   return file_name, file_path
 
-def gcs_upload(bucket_name, source_file_path, destination_file):
-  storage_client = storage.Client()
-  bucket = storage_client.bucket(bucket_name)
-  blob = bucket.blob(destination_file)
-  blob.upload_from_filename(source_file_path)
+def s3_upload(bucket_name, source_file_path, destination_file):
+  s3_client = boto3.client('s3')
+  s3_client.upload_file(source_file_path, bucket_name, destination_file)
   print(f"file: {destination_file} uploaded to bucket: {bucket_name} successfully")
 
 
@@ -44,6 +42,6 @@ if __name__ == "__main__":
   print(f"Total files to extract: {len(urls)}")
   for url in urls:
     file_name, file_path = downloader(url, "./")
-    print("Sending to GCS")
-    gcs_upload(LANDING_BUCKET, file_path, f"combustiveis/{file_name}")
+    print("Sending to S3")
+    s3_upload(LANDING_BUCKET, file_path, f"combustiveis/{file_name}")
   print("Done!")

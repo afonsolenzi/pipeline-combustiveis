@@ -7,7 +7,7 @@ import pyspark.sql.functions as f
 sys.path.insert(0, './helpers')
 from helpers.spark import get_spark_session
 sys.path.insert(0, './config')
-from config.gcs import LANDING_BUCKET, SILVER_BUCKET
+from config.aws import LANDING_BUCKET, PROCESSING_BUCKET
 from pyspark.sql import (
     SparkSession, 
     DataFrame
@@ -21,13 +21,13 @@ def normalize_column(column_name: str):
 
 
 def read_csv(spark: SparkSession, bucket: str) -> DataFrame:
-    """Read CSV files from GCS bucket"""
+    """Read CSV files from S3 bucket"""
     df = (
         spark
         .read
         .format("csv")
         .options(header='true', inferSchema='true', delimiter=';')
-        .load(f"gs://{bucket}/combustiveis/*.csv")
+        .load(f"s3a://{bucket}/combustiveis/*.csv")
         .withColumn("file_name", f.input_file_name())
     )
     return df
@@ -49,8 +49,8 @@ def transform(df: DataFrame) -> DataFrame:
     return df
 
 def write_parquet(bucket: str, df: DataFrame) -> DataFrame:
-    """Write PARQUET files to GCS bucket"""
-    df_path = f"gs://{bucket}/combustiveis"
+    """Write PARQUET files to S3 bucket"""
+    df_path = f"s3a://{bucket}/combustiveis"
     print(f"Path: {df_path}")
     (
         df
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     """Main ETL script definition."""
     spark = get_spark_session()
 
-    print("Processing data from landing to silver")
+    print("Processing data from landing to processing")
     print("Reading Dataframe!")
     df = read_csv(spark, LANDING_BUCKET)
     print("Done!")
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     df = transform(df)
     print(f"Schema after processing: {df.printSchema()}")
     print("Writing Dataframe!")
-    write_parquet(SILVER_BUCKET, df)
+    write_parquet(PROCESSING_BUCKET, df)
     print("Done!")
     spark.stop()
     
