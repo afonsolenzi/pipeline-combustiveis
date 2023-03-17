@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: maylatt/pyspark-notebook
+  repository: maylatt/btc-edc-m3-notebook
   pullPolicy: IfNotPresent
   tag: "3.1.1"
 
@@ -31,29 +31,29 @@ persistence:
 # Extra environment variables to append to pyspark container
 # This will be appended to the current 'env:' key. You can use any of the kubernetes env
 # syntax here
-env:
-  - name: GOOGLE_APPLICATION_CREDENTIALS
-    value: /mnt/secrets/key.json
+env: []
+  # - name: GOOGLE_APPLICATION_CREDENTIALS
+  #   value: /mnt/secrets/key.json
 
 # Allows you to load environment variables from kubernetes secret
-secret: []
-# - envName: AWS_ACCESS_KEY_ID
-#   secretName: ""
-#   secretKey: ""
-# - envName: AWS_SECRET_ACCESS_KEY
-#   secretName: ""
-#   secretKey: ""
+secret:
+  - envName: AWS_ACCESS_KEY_ID
+    secretName: "aws-secret"
+    secretKey: "AWS_ACCESS_KEY_ID"
+  - envName: AWS_SECRET_ACCESS_KEY
+    secretName: "aws-secret"
+    secretKey: "AWS_SECRET_ACCESS_KEY"
 
 # Mount additional volumes into pyspark container.
-extraVolumes:
-  - name: secrets
-    secret:
-      secretName: gcp-credentials
+extraVolumes: []
+#   - name: secrets
+#     secret:
+#       secretName: gcp-credentials
 
-extraVolumeMounts:
-  - name: secrets
-    mountPath: "/mnt/secrets"
-    readOnly: true
+extraVolumeMounts: []
+#   - name: secrets
+#     mountPath: "/mnt/secrets"
+#     readOnly: true
 
 serviceAccount:
   # Specifies whether a service account should be created
